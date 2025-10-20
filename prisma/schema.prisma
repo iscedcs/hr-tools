@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String?
+  password  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  employee Employee?
+}
+
+enum UserRole {
+  superadmin
+  hr_admin
+  employee
+}
+
+enum AttendanceStatus {
+  checked_in
+  checked_out
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+}
+
+model Employee {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  role           UserRole @default(employee)
+  departmentId   String?
+  position       String?
+  phoneNumber    String?
+  nfcCardId      String?  @unique
+  employeeCodeId String?  @unique // ✅ define this FK
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department        Department?     @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+  managedDepartment Department?     @relation("DepartmentManager")
+  attendanceLogs    AttendanceLog[]
+  leaveRequests     LeaveRequest[]  @relation("EmployeeLeaveRequests")
+  approvedLeaves    LeaveRequest[]  @relation("LeaveApprover")
+  notifications     Notification[]
+  employeeCode      EmployeeCode?   @relation(fields: [employeeCodeId], references: [id])
+
+  @@map("employees")
+}
+
+model EmployeeCode {
+  id         String    @id @default(uuid())
+  code       String    @unique
+  assigned   Boolean   @default(false)
+  assignedAt DateTime?
+  assignedTo String? // userId or employeeId
+  createdAt  DateTime  @default(now())
+  employeeId String?   @unique
+  Employee   Employee?
+
+  @@map("employee_codes")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  managerId   String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  manager   Employee?  @relation("DepartmentManager", fields: [managerId], references: [id])
+  employees Employee[] @relation("EmployeeDepartment")
+}
+
+model AttendanceLog {
+  id               String           @id @default(uuid())
+  employeeId       String
+  checkInTime      DateTime
+  checkOutTime     DateTime?
+  status           AttendanceStatus @default(checked_in)
+  checkInLocation  String?
+  checkOutLocation String?
+  checkInMethod    String           @default("manual")
+  checkOutMethod   String?
+  notes            String?
+  totalHours       Decimal?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([checkInTime])
+  @@index([status])
+}
+
+model LeaveRequest {
+  id              String      @id @default(uuid())
+  employeeId      String
+  leaveType       String
+  startDate       DateTime
+  endDate         DateTime
+  totalDays       Int
+  reason          String?
+  status          LeaveStatus @default(pending)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  employee Employee  @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Cascade)
+  approver Employee? @relation("LeaveApprover", fields: [approvedBy], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  employeeId String
+  title      String
+  message    String
+  type       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([isRead])
+}
+
+model SystemSetting {
+  id           String   @id @default(uuid())
+  settingKey   String   @unique
+  settingValue String
+  description  String?
+  updatedAt    DateTime @updatedAt
+}
