@@ -11,8 +11,11 @@ import { fromZonedTime } from "date-fns-tz";
  *    end   = 2025-11-10T23:00:00.000Z
  */
 export function getTodayRange(timeZone: string = "Africa/Lagos") {
-  // Get local midnight in the specified timezone
-  const startOfTodayLocal = startOfDay(new Date());
+  // Get the current instant
+  const now = new Date();
+
+  // Compute start of today in server’s local time
+  const startOfTodayLocal = startOfDay(now);
 
   // Convert Lagos local midnight to UTC timestamp
   const start = fromZonedTime(startOfTodayLocal, timeZone);
