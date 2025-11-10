@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTodayAttendance } from "@/actions/attendance-actions";
 import { Calendar, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface TodayAttendanceCardProps {
   userId: string;
@@ -12,6 +12,8 @@ export async function TodayAttendanceCard({
 }: TodayAttendanceCardProps) {
   const result = await getTodayAttendance(userId);
   const attendance = result.data;
+
+  const timeZone = "Africa/lagos";
 
   return (
     <Card>
@@ -34,7 +36,13 @@ export async function TodayAttendanceCard({
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Check-in</p>
                 <p className="text-lg font-semibold">
-                  {format(new Date(attendance.checkInTime), "HH:mm")}
+                  {attendance.checkInTime
+                    ? formatInTimeZone(
+                        new Date(attendance.checkInTime),
+                        timeZone,
+                        "HH:mm:ss"
+                      )
+                    : "—"}{" "}
                 </p>
               </div>
             </div>
@@ -43,7 +51,11 @@ export async function TodayAttendanceCard({
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Check-out</p>
                   <p className="text-lg font-semibold">
-                    {format(new Date(attendance.checkOutTime), "HH:mm")}
+                    {formatInTimeZone(
+                      new Date(attendance.checkOutTime),
+                      timeZone,
+                      "HH:mm"
+                    )}
                   </p>
                 </div>
                 <div className="space-y-1">
