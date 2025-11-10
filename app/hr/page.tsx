@@ -1,28 +1,23 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Clock } from "lucide-react";
-import { prisma } from "@/lib/db";
 import { LiveAttendanceTable } from "@/components/hr/live-attendance-table";
-import { toZonedTime } from "date-fns-tz";
-import { startOfDay } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/db";
+import { getTodayRange } from "@/lib/utils/getTodayRange";
+import { Clock, UserCheck, Users, UserX } from "lucide-react";
 export default async function HROverviewPage() {
-  // Get today's stats
-  const timeZone = "Africa/Lagos";
-  const now = new Date();
-  const zonedDate = toZonedTime(now, timeZone);
-  const today = startOfDay(zonedDate);
+  const { start, end } = getTodayRange("Africa/Lagos");
 
   const [totalEmployees, checkedIn, checkedOut, onLeave] = await Promise.all([
     prisma.employee.count({ where: { isActive: true } }),
     prisma.attendanceLog.findMany({
       where: {
-        checkInTime: { gte: today },
+        checkInTime: { gte: start, lt: end },
         status: "checked_in",
       },
       distinct: ["employeeId"],
     }),
     prisma.attendanceLog.findMany({
       where: {
-        checkInTime: { gte: today },
+        checkInTime: { gte: start, lt: end },
         status: "checked_out",
       },
       distinct: ["employeeId"],
