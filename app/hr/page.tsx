@@ -2,11 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, UserX, Clock } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LiveAttendanceTable } from "@/components/hr/live-attendance-table";
-
+import { toZonedTime } from "date-fns-tz";
+import { startOfDay } from "date-fns";
 export default async function HROverviewPage() {
   // Get today's stats
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const timeZone = "Africa/Lagos";
+  const now = new Date();
+  const zonedDate = toZonedTime(now, timeZone);
+  const today = startOfDay(zonedDate);
 
   const [totalEmployees, checkedIn, checkedOut, onLeave] = await Promise.all([
     prisma.employee.count({ where: { isActive: true } }),

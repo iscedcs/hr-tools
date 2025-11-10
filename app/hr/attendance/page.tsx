@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/db";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 export default async function AttendanceLogsPage() {
   const logs = await prisma.attendanceLog.findMany({
@@ -17,6 +18,8 @@ export default async function AttendanceLogsPage() {
     orderBy: { checkInTime: "desc" },
     take: 100,
   });
+
+  const timeZone = "Africa/lagos";
 
   return (
     <div className="space-y-6">
@@ -68,7 +71,11 @@ export default async function AttendanceLogsPage() {
                     key={log.id}
                     className="border-b border-border hover:bg-muted/50">
                     <td className="py-3 px-4 text-sm">
-                      {format(new Date(log.checkInTime), "MMM d, yyyy")}
+                      {formatInTimeZone(
+                        new Date(log.checkInTime),
+                        timeZone,
+                        "MMM d, yyyy"
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm font-medium">
                       {log.employee.user.name}
@@ -80,11 +87,19 @@ export default async function AttendanceLogsPage() {
                       {log.employee.department?.name || "N/A"}
                     </td>
                     <td className="py-3 px-4 text-sm">
-                      {format(new Date(log.checkInTime), "HH:mm:ss")}
+                      {formatInTimeZone(
+                        new Date(log.checkInTime),
+                        timeZone,
+                        "HH:mm:ss"
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm">
                       {log.checkOutTime
-                        ? format(new Date(log.checkOutTime), "HH:mm:ss")
+                        ? formatInTimeZone(
+                            new Date(log.checkOutTime),
+                            timeZone,
+                            "HH:mm:ss"
+                          )
                         : "-"}
                     </td>
                     <td className="py-3 px-4 text-sm">
