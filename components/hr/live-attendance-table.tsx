@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/db";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 export async function LiveAttendanceTable() {
+  const timeZone = "Africa/Lagos";
+
+  // Use UTC day range for consistent querying
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -69,17 +72,22 @@ export async function LiveAttendanceTable() {
                   <td className="py-3 px-4 text-sm">
                     {record.employee.department?.name || "N/A"}
                   </td>
+
+                  {/* ✅ Correctly formatted Lagos local time */}
                   <td className="py-3 px-4 text-sm">
-                    {format(new Date(record.checkInTime), "HH:mm")}
+                    {formatInTimeZone(record.checkInTime, timeZone, "HH:mm")}
                   </td>
+
                   <td className="py-3 px-4 text-sm">
                     {record.checkOutTime
-                      ? format(new Date(record.checkOutTime), "HH:mm")
+                      ? formatInTimeZone(record.checkOutTime, timeZone, "HH:mm")
                       : "-"}
                   </td>
+
                   <td className="py-3 px-4 text-sm">
                     {record.totalHours ? `${record.totalHours}h` : "-"}
                   </td>
+
                   <td className="py-3 px-4 text-sm">
                     <Badge
                       variant={
