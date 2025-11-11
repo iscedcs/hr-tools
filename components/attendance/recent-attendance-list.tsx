@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRecentAttendance } from "@/actions/attendance-actions";
 import { History } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface RecentAttendanceListProps {
   userId: string;
@@ -12,6 +12,7 @@ export async function RecentAttendanceList({
 }: RecentAttendanceListProps) {
   const result = await getRecentAttendance(userId, 7);
   const attendance = result.data || [];
+  const timeZone = "Africa/lagos";
 
   return (
     <Card>
@@ -30,13 +31,25 @@ export async function RecentAttendanceList({
                 className="flex items-center justify-between p-3 rounded-lg bg-muted">
                 <div className="space-y-1">
                   {record.checkInTime
-                    ? format(new Date(record.checkInTime), "EEEE, MMM d")
+                    ? formatInTimeZone(
+                        new Date(record.checkInTime),
+                        timeZone,
+                        "EEEE, MMM d"
+                      )
                     : "Invalid date"}
                   <p className="text-sm text-muted-foreground">
                     {record.checkInTime &&
-                      format(new Date(record.checkInTime), "HH:mm")}
+                      formatInTimeZone(
+                        new Date(record.checkInTime),
+                        timeZone,
+                        "HH:mm"
+                      )}
                     {record.checkOutTime &&
-                      ` - ${format(new Date(record.checkOutTime), "HH:mm")}`}
+                      ` - ${formatInTimeZone(
+                        new Date(record.checkOutTime),
+                        timeZone,
+                        "HH:mm"
+                      )}`}
                   </p>
                 </div>
                 <div className="text-right">

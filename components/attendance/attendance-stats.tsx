@@ -1,24 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { prisma } from "@/lib/db"
-import { BarChart3 } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/db";
+import { BarChart3 } from "lucide-react";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface AttendanceStatsProps {
-  userId: string
+  userId: string;
 }
 
 export async function AttendanceStats({ userId }: AttendanceStatsProps) {
   const employee = await prisma.employee.findUnique({
     where: { userId },
-  })
+  });
 
   if (!employee) {
-    return null
+    return null;
   }
 
   // Get stats for current month
-  const startOfMonth = new Date()
-  startOfMonth.setDate(1)
-  startOfMonth.setHours(0, 0, 0, 0)
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
 
   const [totalDays, completedDays, hourStats] = await Promise.all([
     prisma.attendanceLog.count({
@@ -42,10 +43,11 @@ export async function AttendanceStats({ userId }: AttendanceStatsProps) {
       _sum: { totalHours: true },
       _avg: { totalHours: true },
     }),
-  ])
+  ]);
 
-  const totalHours = hourStats._sum.totalHours || 0
-  const avgHours = hourStats._avg.totalHours || 0
+  const totalHours = hourStats._sum.totalHours || 0;
+  const avgHours = hourStats._avg.totalHours || 0;
+  const timeZone = "Africa/lagos";
 
   return (
     <Card>
@@ -67,14 +69,18 @@ export async function AttendanceStats({ userId }: AttendanceStatsProps) {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Total Hours</span>
-            <span className="text-2xl font-bold">{Number(totalHours).toFixed(1)}h</span>
+            <span className="text-2xl font-bold">
+              {Number(totalHours).toFixed(1)}h
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Avg Hours/Day</span>
-            <span className="text-2xl font-bold">{Number(avgHours).toFixed(1)}h</span>
+            <span className="text-2xl font-bold">
+              {Number(avgHours).toFixed(1)}h
+            </span>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
