@@ -1,0 +1,21 @@
+name: Daily Auto Checkout
+
+on:
+  schedule:
+    # GitHub Actions runs in UTC
+    # 17:00 UTC = 18:00 (Africa/Lagos, UTC+1)
+    - cron: "0 17 * * *"
+  workflow_dispatch: {} # so you can test it manually
+
+jobs:
+  call-vercel-cron-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call auto-checkout endpoint
+        run: |
+          echo "Running daily auto-checkout..."
+          curl -X GET "$VERCEL_CRON_URL" \
+            -H "x-cron-secret: $CRON_SECRET"
+        env:
+          VERCEL_CRON_URL: https://hr-tools-beryl.vercel.app/api/cron/auto-checkout
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

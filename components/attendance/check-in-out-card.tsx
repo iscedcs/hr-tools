@@ -124,6 +124,11 @@ export function CheckInOutCard({ userId }: CheckInOutCardProps) {
                 </div>
               </>
             )}
+            {todayAttendance?.checkOutMethod === "auto" && (
+              <p className="text-xs text-muted-foreground">
+                Auto-checked out at 6 PM
+              </p>
+            )}
           </div>
         )}
 
