@@ -51,14 +51,43 @@ export function CheckInOutCard({ userId }: CheckInOutCardProps) {
   const handleCheckIn = async () => {
     setIsLoading(true);
     try {
-      const result = await checkInAction();
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(result.message);
-        await loadTodayAttendance();
+      if (!navigator.geolocation) {
+        toast.error("Geolocation not supported on this device");
+        setIsLoading(false);
+        return;
       }
-    } finally {
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          const result = await checkInAction({
+            lat: latitude,
+            lng: longitude,
+          });
+
+          if (result.error) {
+            toast.error(result.error);
+          } else {
+            toast.success(result.message);
+            await loadTodayAttendance();
+          }
+
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error(error);
+          toast.error("Location permission denied");
+          setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    } catch {
+      toast.error("Failed to check in");
       setIsLoading(false);
     }
   };

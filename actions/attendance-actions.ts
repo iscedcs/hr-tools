@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
+import { getDistanceInMeters } from "@/lib/distance";
+import { OFFICE_LOCATION } from "@/lib/geofence";
 
-export async function checkInAction(location?: string) {
+export async function checkInAction(coords?: { lat: number; lng: number }) {
   try {
     const session = await requireAuth();
 
@@ -16,7 +18,23 @@ export async function checkInAction(location?: string) {
       return { error: "Employee record not found" };
     }
 
-    // Check if already checked in today
+    if (!coords) {
+      return { error: "Location permission required!" };
+    }
+
+    const distance = getDistanceInMeters(
+      coords.lat,
+      coords.lng,
+      OFFICE_LOCATION.lat,
+      OFFICE_LOCATION.lng
+    );
+
+    if (distance > OFFICE_LOCATION.radiusMeters) {
+      return {
+        error: "You must be within FESTAC Tower premises to check in!",
+      };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -37,8 +55,8 @@ export async function checkInAction(location?: string) {
         employeeId: employee.id,
         checkInTime: new Date(),
         status: "checked_in",
-        checkInLocation: location || null,
-        checkInMethod: "manual",
+        checkOutMethod: "gps",
+        checkInLocation: `${coords.lat}, ${coords.lng}`,
       },
     });
 
