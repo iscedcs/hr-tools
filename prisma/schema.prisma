@@ -37,26 +37,32 @@ enum LeaveStatus {
 }
 
 model Employee {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  role           UserRole @default(employee)
-  departmentId   String?
-  position       String?
-  phoneNumber    String?
-  nfcCardId      String?  @unique
-  employeeCodeId String?  @unique // ✅ define this FK
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  role             UserRole         @default(employee)
+  departmentId     String?
+  position         String?
+  phoneNumber      String?
+  nfcCardId        String?          @unique
+  employeeCodeId   String?          @unique // ✅ define this FK
+  isActive         Boolean          @default(true)
+  dateOfBirth      DateTime?
+  dateOfJoining    DateTime?
+  resumptionDate   DateTime?
+  employmentStatus EmploymentStatus @default(full_time)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department        Department?     @relation("EmployeeDepartment", fields: [departmentId], references: [id])
-  managedDepartment Department?     @relation("DepartmentManager")
-  attendanceLogs    AttendanceLog[]
-  leaveRequests     LeaveRequest[]  @relation("EmployeeLeaveRequests")
-  approvedLeaves    LeaveRequest[]  @relation("LeaveApprover")
-  notifications     Notification[]
-  employeeCode      EmployeeCode?   @relation(fields: [employeeCodeId], references: [id])
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department         Department?         @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+  managedDepartment  Department?         @relation("DepartmentManager")
+  attendanceLogs     AttendanceLog[]
+  leaveRequests      LeaveRequest[]      @relation("EmployeeLeaveRequests")
+  approvedLeaves     LeaveRequest[]      @relation("LeaveApprover")
+  notifications      Notification[]
+  employeeCode       EmployeeCode?       @relation(fields: [employeeCodeId], references: [id])
+  employeeDocuments  EmployeeDocument[]
+  employeeBankDetail EmployeeBankDetail?
 
   @@map("employees")
 }
@@ -72,6 +78,32 @@ model EmployeeCode {
   Employee   Employee?
 
   @@map("employee_codes")
+}
+
+model EmployeeDocument {
+  id         String               @id @default(uuid())
+  employeeId String
+  type       EmployeeDocumentType
+  fileUrl    String
+  fileName   String
+  uploadedAt DateTime             @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, type])
+}
+
+model EmployeeBankDetail {
+  id            String            @id @default(uuid())
+  employeeId    String            @unique
+  bankName      String
+  accountNumber String
+  accountName   String
+  status        BankDetailsStatus @default(LOCKED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Department {
@@ -151,4 +183,24 @@ model SystemSetting {
   settingValue String
   description  String?
   updatedAt    DateTime @updatedAt
+}
+
+enum EmploymentStatus {
+  intern
+  contract
+  full_time
+}
+
+enum EmployeeDocumentType {
+  cv
+  nda
+  hand_book
+  acceptance_letter
+  profile_picture
+}
+
+enum BankDetailsStatus {
+  LOCKED
+  PENDING_APPROVAL
+  EDITABLE
 }

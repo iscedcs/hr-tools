@@ -2,7 +2,7 @@ import { LiveAttendanceTable } from "@/components/hr/live-attendance-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 import { getTodayRange } from "@/lib/utils/getTodayRange";
-import { Clock, UserCheck, Users, UserX } from "lucide-react";
+import { Clock, ShieldCheck, UserCheck, Users, UserX } from "lucide-react";
 export default async function HROverviewPage() {
   const { start, end } = getTodayRange("Africa/Lagos");
 
@@ -43,7 +43,7 @@ export default async function HROverviewPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -55,6 +55,18 @@ export default async function HROverviewPage() {
             <div className="text-2xl font-bold">{totalEmployees}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Active employees
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Leave Request</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{onLeave}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Requested leaves by employees
             </p>
           </CardContent>
         </Card>
