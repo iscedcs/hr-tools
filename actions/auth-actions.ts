@@ -13,6 +13,10 @@ const signUpSchema = z.object({
   departmentId: z.string().optional(),
   position: z.string().optional(),
   phoneNumber: z.string().optional(),
+  dateOfBirth: z.string(),
+  dateOfJoining: z.string(),
+  resumptionDate: z.string(),
+  employmentStatus: z.enum(["intern", "contract", "full_time"]),
 });
 
 export async function signUpAction(data: z.infer<typeof signUpSchema>) {
@@ -63,6 +67,10 @@ export async function signUpAction(data: z.infer<typeof signUpSchema>) {
           departmentId: validatedData.departmentId!,
           position: validatedData.position!,
           phoneNumber: validatedData.phoneNumber!,
+          dateOfBirth: new Date(validatedData.dateOfBirth),
+          dateOfJoining: new Date(validatedData.dateOfJoining),
+          resumptionDate: new Date(validatedData.resumptionDate),
+          employmentStatus: validatedData.employmentStatus,
           isActive: true,
           employeeCodeId: codeRecord.id,
         },
