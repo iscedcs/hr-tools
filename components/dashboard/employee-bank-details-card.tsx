@@ -16,9 +16,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 import { saveBankDetails } from "@/actions/employee-bank-details";
+import { requestBankUpdate } from "@/actions/request-bank-update";
 
 const schema = z.object({
   bankName: z.string().min(2),
@@ -33,7 +35,7 @@ type Status = "LOCKED" | "PENDING_APPROVAL" | "EDITABLE";
 
 export function EmployeeBankDetailsCard({
   defaultValues,
-  status = "EDITABLE",
+  status = "LOCKED",
 }: {
   defaultValues?: Partial<FormData>;
   status?: Status;
@@ -59,7 +61,7 @@ export function EmployeeBankDetailsCard({
         return;
       }
       toast.success("Bank details saved");
-      setIsEditing(false); // lock form after save
+      setIsEditing(false);
     } finally {
       setIsSaving(false);
     }
@@ -67,8 +69,13 @@ export function EmployeeBankDetailsCard({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Bank Details</CardTitle>
+
+        {status === "LOCKED" && <Badge variant="secondary">Locked</Badge>}
+        {status === "PENDING_APPROVAL" && (
+          <Badge variant="outline">Pending HR Approval</Badge>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -120,7 +127,7 @@ export function EmployeeBankDetailsCard({
               Your bank details are visible only to HR and Finance.
             </p>
 
-            {/* ACTIONS */}
+            {/* SAVE */}
             {isEditing && (
               <Button type="submit" className="w-full" disabled={isSaving}>
                 Save Bank Details
@@ -129,28 +136,33 @@ export function EmployeeBankDetailsCard({
           </form>
         </Form>
 
-        {!isEditing && status === "LOCKED" && (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => toast.info("Request sent to HR")}>
-            Request Account Update
-          </Button>
-        )}
-
-        {!isEditing && status === "PENDING_APPROVAL" && (
-          <p className="text-sm text-muted-foreground text-center">
-            Update request pending HR approval
-          </p>
-        )}
-
-        {!isEditing && status === "EDITABLE" && (
+        {/* ACTIONS */}
+        {status === "EDITABLE" && !isEditing && (
           <Button
             variant="outline"
             className="w-full"
             onClick={() => setIsEditing(true)}>
             Update Account
           </Button>
+        )}
+
+        {status === "LOCKED" && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={async () => {
+              const res = await requestBankUpdate();
+              if (res?.error) toast.error(res.error);
+              else toast.success("Request sent to HR");
+            }}>
+            Request Account Update
+          </Button>
+        )}
+
+        {status === "PENDING_APPROVAL" && (
+          <p className="text-sm text-muted-foreground text-center">
+            Awaiting HR approval
+          </p>
         )}
       </CardContent>
     </Card>

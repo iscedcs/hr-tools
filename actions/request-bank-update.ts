@@ -1,15 +1,9 @@
 "use server";
+
 import { requireAuth } from "@/lib/auth-utils";
 import prisma from "@/lib/db";
 
-export async function saveBankDetails(
-  prevState: any,
-  data: {
-    bankName: string;
-    accountNumber: string;
-    accountName: string;
-  }
-) {
+export async function requestBankUpdate() {
   const session = await requireAuth();
 
   const employee = await prisma.employee.findUnique({
@@ -18,17 +12,9 @@ export async function saveBankDetails(
 
   if (!employee) return { error: "Employee not found" };
 
-  await prisma.employeeBankDetail.upsert({
+  await prisma.employeeBankDetail.update({
     where: { employeeId: employee.id },
-    update: {
-      status: "PENDING_APPROVAL",
-      requestedAt: new Date(),
-    },
-    create: {
-      employeeId: employee.id,
-      bankName: "",
-      accountName: "",
-      accountNumber: "",
+    data: {
       status: "PENDING_APPROVAL",
       requestedAt: new Date(),
     },

@@ -14,54 +14,35 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
-  employee Employee?
-}
-
-enum UserRole {
-  superadmin
-  hr_admin
-  employee
-}
-
-enum AttendanceStatus {
-  checked_in
-  checked_out
-}
-
-enum LeaveStatus {
-  pending
-  approved
-  rejected
+  employee  Employee?
 }
 
 model Employee {
-  id               String           @id @default(uuid())
-  userId           String           @unique
-  role             UserRole         @default(employee)
-  departmentId     String?
-  position         String?
-  phoneNumber      String?
-  nfcCardId        String?          @unique
-  employeeCodeId   String?          @unique // ✅ define this FK
-  isActive         Boolean          @default(true)
-  dateOfBirth      DateTime?
-  dateOfJoining    DateTime?
-  resumptionDate   DateTime?
-  employmentStatus EmploymentStatus @default(full_time)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department         Department?         @relation("EmployeeDepartment", fields: [departmentId], references: [id])
-  managedDepartment  Department?         @relation("DepartmentManager")
+  id                 String              @id @default(uuid())
+  userId             String              @unique
+  role               UserRole            @default(employee)
+  departmentId       String?
+  position           String?
+  phoneNumber        String?
+  nfcCardId          String?             @unique
+  employeeCodeId     String?             @unique
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  dateOfBirth        DateTime?
+  dateOfJoining      DateTime?
+  employmentStatus   EmploymentStatus    @default(full_time)
+  resumptionDate     DateTime?
   attendanceLogs     AttendanceLog[]
-  leaveRequests      LeaveRequest[]      @relation("EmployeeLeaveRequests")
-  approvedLeaves     LeaveRequest[]      @relation("LeaveApprover")
-  notifications      Notification[]
-  employeeCode       EmployeeCode?       @relation(fields: [employeeCodeId], references: [id])
-  employeeDocuments  EmployeeDocument[]
+  managedDepartment  Department?         @relation("DepartmentManager")
   employeeBankDetail EmployeeBankDetail?
+  employeeDocuments  EmployeeDocument[]
+  approvedLeaves     LeaveRequest[]      @relation("LeaveApprover")
+  leaveRequests      LeaveRequest[]      @relation("EmployeeLeaveRequests")
+  notifications      Notification[]
+  department         Department?         @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+  employeeCode       EmployeeCode?       @relation(fields: [employeeCodeId], references: [id])
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("employees")
 }
@@ -71,7 +52,7 @@ model EmployeeCode {
   code       String    @unique
   assigned   Boolean   @default(false)
   assignedAt DateTime?
-  assignedTo String? // userId or employeeId
+  assignedTo String?
   createdAt  DateTime  @default(now())
   employeeId String?   @unique
   Employee   Employee?
@@ -86,35 +67,37 @@ model EmployeeDocument {
   fileUrl    String
   fileName   String
   uploadedAt DateTime             @default(now())
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee   Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, type])
 }
 
 model EmployeeBankDetail {
-  id            String            @id @default(uuid())
-  employeeId    String            @unique
-  bankName      String
-  accountNumber String
-  accountName   String
-  status        BankDetailsStatus @default(LOCKED)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id              String            @id @default(uuid())
+  employeeId      String            @unique
+  bankName        String
+  accountNumber   String
+  accountName     String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  status          BankDetailsStatus @default(LOCKED)
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  requestedAt     DateTime?
+  employee        Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Department {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String?
-  managerId   String?  @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  manager   Employee?  @relation("DepartmentManager", fields: [managerId], references: [id])
-  employees Employee[] @relation("EmployeeDepartment")
+  managerId   String?    @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  manager     Employee?  @relation("DepartmentManager", fields: [managerId], references: [id])
+  employees   Employee[] @relation("EmployeeDepartment")
 }
 
 model AttendanceLog {
@@ -131,8 +114,7 @@ model AttendanceLog {
   totalHours       Decimal?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee         Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([checkInTime])
@@ -153,9 +135,8 @@ model LeaveRequest {
   rejectionReason String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
-
-  employee Employee  @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Cascade)
-  approver Employee? @relation("LeaveApprover", fields: [approvedBy], references: [id])
+  approver        Employee?   @relation("LeaveApprover", fields: [approvedBy], references: [id])
+  employee        Employee    @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([status])
@@ -169,8 +150,7 @@ model Notification {
   type       String
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([isRead])
@@ -182,6 +162,23 @@ model SystemSetting {
   settingValue String
   description  String?
   updatedAt    DateTime @updatedAt
+}
+
+enum UserRole {
+  superadmin
+  hr_admin
+  employee
+}
+
+enum AttendanceStatus {
+  checked_in
+  checked_out
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
 }
 
 enum EmploymentStatus {
