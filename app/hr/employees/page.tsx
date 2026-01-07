@@ -130,7 +130,11 @@ export default async function EmployeesPage() {
                         {employee.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-sm">
+                    <td className="py-3 px-4 text-sm flex gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/hr/employees/${employee.id}`}>View</Link>
+                      </Button>
+
                       <EditEmployeeDialog
                         employee={employee}
                         departments={department}
