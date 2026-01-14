@@ -140,6 +140,29 @@ export async function signInAction(email: string, password: string) {
 //   }
 // }
 
+export async function checkAccountStatus(email: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+        deletedAt: null,
+      },
+      include: {
+        employee: true,
+      },
+    });
+
+    if (!user || !user.employee) {
+      return { isActive: null }; // User doesn't exist
+    }
+
+    return { isActive: user.employee.isActive };
+  } catch (error) {
+    console.error("Error checking account status:", error);
+    return { isActive: null };
+  }
+}
+
 export async function signOutAction() {
   try {
     await signOut({ redirect: false });

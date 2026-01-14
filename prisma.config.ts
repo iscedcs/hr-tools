@@ -1,17 +1,17 @@
-import { defineConfig } from 'prisma/config';
-import path from 'node:path';
-import * as dotenv from 'dotenv';
+import { defineConfig } from "prisma/config";
+import path from "node:path";
+import * as dotenv from "dotenv";
 
 // Load .env from root directory
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 export default defineConfig({
-	schema: path.join(__dirname, 'prisma', 'schema.prisma'),
-	migrations: {
-		path: 'prisma/migrations',
-		seed: 'tsx prisma/seed.ts',
-	},
-	datasource: {
-		url: process.env.DATABASE_URL!,
-	},
+  schema: path.join(__dirname, "prisma", "schema.prisma"),
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
+  datasource: {
+    url: process.env.DATABASE_URL!,
+  },
 });
