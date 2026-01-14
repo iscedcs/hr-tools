@@ -7,7 +7,7 @@ import { UploadCloud, FileText, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { uploadEmployeeDocument } from "@/actions/upload-employee-docs";
 
-type DocType = "cv" | "acceptance_letter";
+type DocType = "cv" | "acceptance_letter" | "nda" | "hand_book";
 
 interface DocumentRowProps {
   label: string;
@@ -100,9 +100,13 @@ function DocumentRow({ label, type, fileUrl }: DocumentRowProps) {
 export function EmployeeDocumentsCard({
   cvUrl,
   acceptanceLetterUrl,
+  ndaUrl,
+  handbookUrl,
 }: {
   cvUrl?: string | null;
   acceptanceLetterUrl?: string | null;
+  ndaUrl?: string | null;
+  handbookUrl?: string | null;
 }) {
   return (
     <Card>
@@ -116,6 +120,12 @@ export function EmployeeDocumentsCard({
           label="Acceptance Letter"
           type="acceptance_letter"
           fileUrl={acceptanceLetterUrl}
+        />
+        <DocumentRow label="NDA" type="nda" fileUrl={ndaUrl} />
+        <DocumentRow
+          label="Employee Handbook"
+          type="hand_book"
+          fileUrl={handbookUrl}
         />
       </CardContent>
     </Card>

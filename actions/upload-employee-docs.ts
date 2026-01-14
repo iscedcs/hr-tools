@@ -6,7 +6,7 @@ import prisma from "@/lib/db";
 import { uploadFile } from "@/lib/spaces";
 
 export async function uploadEmployeeDocument(
-  type: "cv" | "acceptance_letter" | "profile_picture",
+  type: "cv" | "acceptance_letter" | "nda" | "hand_book" | "profile_picture",
   file: File
 ) {
   const session = await requireAuth();

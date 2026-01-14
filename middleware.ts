@@ -17,10 +17,32 @@ function extractRole(authObj: any): string | null {
   return null;
 }
 
+// Helper function to add security headers to any response
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("X-DNS-Prefetch-Control", "on");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  );
+  return response;
+}
+
 export default auth((req) => {
   const { nextUrl } = req;
 
   const pathname = nextUrl.pathname;
+
+  // Add pathname to headers for dynamic metadata generation
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
 
   const isLoggedIn = !!req.auth;
   // console.log("middleware - req.auth:", JSON.stringify(req.auth));
@@ -39,18 +61,22 @@ export default auth((req) => {
 
   // 1. Redirect logged-in users away from auth pages
   if (isLoggedIn && isPublicRoute) {
+    let redirectUrl: URL;
     if (userRole === "superadmin") {
-      return NextResponse.redirect(new URL("/admin", req.url));
+      redirectUrl = new URL("/admin", req.url);
     } else if (userRole === "hr_admin" || userRole === "hr") {
-      return NextResponse.redirect(new URL("/hr", req.url));
+      redirectUrl = new URL("/hr", req.url);
     } else {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      redirectUrl = new URL("/dashboard", req.url);
     }
+    return addSecurityHeaders(NextResponse.redirect(redirectUrl));
   }
 
   // 2. Redirect non-logged-in users to login
   if (!isLoggedIn && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return addSecurityHeaders(
+      NextResponse.redirect(new URL("/login", req.url))
+    );
   }
 
   // 3. Role-based route protection
@@ -65,19 +91,32 @@ export default auth((req) => {
   );
 
   if (isEmployeeRoute && userRole !== "employee") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+    return addSecurityHeaders(
+      NextResponse.redirect(new URL("/unauthorized", req.url))
+    );
   }
   // console.log("userRole", userRole); // temp
 
   if (isSuperadminRoute && userRole !== "superadmin") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+    return addSecurityHeaders(
+      NextResponse.redirect(new URL("/unauthorized", req.url))
+    );
   }
 
   if (isHRRoute && userRole !== "hr_admin" && userRole !== "superadmin") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+    return addSecurityHeaders(
+      NextResponse.redirect(new URL("/unauthorized", req.url))
+    );
   }
 
-  return NextResponse.next();
+  // Add security headers to response
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  return addSecurityHeaders(response);
 });
 
 export const config = {

@@ -12,6 +12,7 @@ import {
   approveBankUpdate,
   rejectBankUpdate,
 } from "@/actions/hr-bank-approval";
+import { EmployeeDocumentUpload } from "@/components/hr/employee-document-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,10 @@ export default async function EmployeeDetailsPage({
   const cv = employee.employeeDocuments.find((d) => d.type === "cv")?.fileUrl;
   const acceptanceLetter = employee.employeeDocuments.find(
     (d) => d.type === "acceptance_letter"
+  )?.fileUrl;
+  const nda = employee.employeeDocuments.find((d) => d.type === "nda")?.fileUrl;
+  const handbook = employee.employeeDocuments.find(
+    (d) => d.type === "hand_book"
   )?.fileUrl;
 
   return (
@@ -176,31 +181,19 @@ export default async function EmployeeDetailsPage({
           <CardHeader>
             <CardTitle>Documents</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <DocCard title="CV" url={cv} />
-            <DocCard title="Acceptance Letter" url={acceptanceLetter} />
-            <DocCard title="Profile Picture" url={profilePicture} />
+          <CardContent>
+            <EmployeeDocumentUpload
+              employeeId={employee.id}
+              documents={{
+                cv,
+                acceptanceLetter,
+                nda,
+                handbook,
+              }}
+            />
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function DocCard({ title, url }: { title: string; url?: string | null }) {
-  return (
-    <div className="border rounded-lg p-4 space-y-2">
-      <p className="font-medium">{title}</p>
-      {url ? (
-        <a
-          className="text-sm text-primary underline"
-          href={url}
-          target="_blank">
-          View
-        </a>
-      ) : (
-        <p className="text-sm text-muted-foreground">Not uploaded</p>
-      )}
     </div>
   );
 }

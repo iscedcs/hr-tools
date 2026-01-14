@@ -11,8 +11,14 @@ import { EmployeeDocumentsCard } from "@/components/dashboard/employee-documents
 import { EmployeeBankDetailsCard } from "@/components/dashboard/employee-bank-details-card";
 import { ProfileCompletionCard } from "@/components/dashboard/profile-completion-card";
 import { calculateProfileCompletion } from "@/lib/calculate-profile-completion";
+import type { Metadata } from "next";
+import { generateMetadata as generateDynamicMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return generateDynamicMetadata("/dashboard");
+}
 
 export default async function DashboardPage() {
   const session = await requireAuth();
@@ -35,6 +41,11 @@ export default async function DashboardPage() {
   const acceptanceLetterUrl =
     documents.find((doc) => doc.type === "acceptance_letter")?.fileUrl ?? null;
 
+  const ndaUrl = documents.find((doc) => doc.type === "nda")?.fileUrl ?? null;
+
+  const handbookUrl =
+    documents.find((doc) => doc.type === "hand_book")?.fileUrl ?? null;
+
   const profileImageUrl =
     documents.find((d) => d.type === "profile_picture")?.fileUrl ?? null;
 
@@ -45,6 +56,8 @@ export default async function DashboardPage() {
   const profileStats = calculateProfileCompletion({
     hasCv: documents.some((d) => d.type === "cv"),
     hasAcceptanceLetter: documents.some((d) => d.type === "acceptance_letter"),
+    hasNda: documents.some((d) => d.type === "nda"),
+    hasHandbook: documents.some((d) => d.type === "hand_book"),
     hasProfilePicture: documents.some((d) => d.type === "profile_picture"),
     hasBankDetails: !!bankDetails,
   });
@@ -85,6 +98,8 @@ export default async function DashboardPage() {
           <EmployeeDocumentsCard
             cvUrl={cvUrl}
             acceptanceLetterUrl={acceptanceLetterUrl}
+            ndaUrl={ndaUrl}
+            handbookUrl={handbookUrl}
           />
 
           <EmployeeBankDetailsCard

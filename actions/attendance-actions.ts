@@ -60,6 +60,7 @@ export async function checkInAction(
     }
 
     // Get work start time to calculate punctuality
+    // Work resumption is 9am, and from 10:30am (1.5 hours after) it should be counted as late
     const workStartSetting = await prisma.systemSetting.findUnique({
       where: { settingKey: "work_hours_start" },
     });
@@ -67,11 +68,12 @@ export async function checkInAction(
     const [hours, minutes] = workStartTime.split(":").map(Number);
 
     const checkInTime = new Date();
-    const workStartThreshold = new Date(checkInTime);
-    workStartThreshold.setHours(hours, minutes, 0, 0);
+    const lateThreshold = new Date(checkInTime);
+    lateThreshold.setHours(hours, minutes, 0, 0);
+    lateThreshold.setMinutes(lateThreshold.getMinutes() + 90); // Add 1.5 hours (90 minutes)
 
     const punctualityStatus: PunctualityStatus =
-      checkInTime > workStartThreshold
+      checkInTime >= lateThreshold
         ? PunctualityStatus.LATE
         : PunctualityStatus.ON_TIME;
 
