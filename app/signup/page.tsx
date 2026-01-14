@@ -1,10 +1,10 @@
 import { SignUpForm } from "@/components/auth/signup-form";
 import type { Metadata } from "next";
+import { generateMetadata as generateDynamicMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Sign Up | HR Attendance System",
-  description: "Create your account",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateDynamicMetadata("/signup");
+}
 
 export default function SignUpPage() {
   return (
