@@ -53,6 +53,12 @@ export async function LiveAttendanceTable() {
                   Check Out
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                  Method
+                </th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                  Punctuality
+                </th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                   Hours
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
@@ -82,6 +88,33 @@ export async function LiveAttendanceTable() {
                     {record.checkOutTime
                       ? formatInTimeZone(record.checkOutTime, timeZone, "HH:mm")
                       : "-"}
+                  </td>
+
+                  <td className="py-3 px-4 text-sm">
+                    <Badge variant="outline">
+                      {record.checkInMethod === "IN_OFFICE"
+                        ? "In Office"
+                        : record.checkInMethod === "REMOTE"
+                        ? "Remote"
+                        : record.checkInMethod || "-"}
+                    </Badge>
+                  </td>
+
+                  <td className="py-3 px-4 text-sm">
+                    {record.punctualityStatus ? (
+                      <Badge
+                        variant={
+                          record.punctualityStatus === "ON_TIME"
+                            ? "default"
+                            : "destructive"
+                        }>
+                        {record.punctualityStatus === "ON_TIME"
+                          ? "On Time"
+                          : "Late"}
+                      </Badge>
+                    ) : (
+                      "-"
+                    )}
                   </td>
 
                   <td className="py-3 px-4 text-sm">

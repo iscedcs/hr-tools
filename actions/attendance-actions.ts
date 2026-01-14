@@ -5,8 +5,12 @@ import { requireAuth } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 import { getDistanceInMeters } from "@/lib/distance";
 import { OFFICE_LOCATION } from "@/lib/geofence";
+import { PunctualityStatus } from "@prisma/client";
 
-export async function checkInAction(coords?: { lat: number; lng: number }) {
+export async function checkInAction(
+  workMode: "IN_OFFICE" | "REMOTE",
+  coords?: { lat: number; lng: number }
+) {
   try {
     const session = await requireAuth();
 
@@ -18,21 +22,26 @@ export async function checkInAction(coords?: { lat: number; lng: number }) {
       return { error: "Employee record not found" };
     }
 
-    if (!coords) {
-      return { error: "Location permission required!" };
-    }
+    // Validate work mode requirements
+    if (workMode === "IN_OFFICE") {
+      if (!coords) {
+        return {
+          error: "Location permission required for in-office check-in!",
+        };
+      }
 
-    const distance = getDistanceInMeters(
-      coords.lat,
-      coords.lng,
-      OFFICE_LOCATION.lat,
-      OFFICE_LOCATION.lng
-    );
+      const distance = getDistanceInMeters(
+        coords.lat,
+        coords.lng,
+        OFFICE_LOCATION.lat,
+        OFFICE_LOCATION.lng
+      );
 
-    if (distance > OFFICE_LOCATION.radiusMeters) {
-      return {
-        error: "You must be within FESTAC Tower premises to check in!",
-      };
+      if (distance > OFFICE_LOCATION.radiusMeters) {
+        return {
+          error: "You must be within FESTAC Tower premises to check in!",
+        };
+      }
     }
 
     const today = new Date();
@@ -50,13 +59,33 @@ export async function checkInAction(coords?: { lat: number; lng: number }) {
       return { error: "You are already checked in for today" };
     }
 
+    // Get work start time to calculate punctuality
+    const workStartSetting = await prisma.systemSetting.findUnique({
+      where: { settingKey: "work_hours_start" },
+    });
+    const workStartTime = workStartSetting?.settingValue || "09:00";
+    const [hours, minutes] = workStartTime.split(":").map(Number);
+
+    const checkInTime = new Date();
+    const workStartThreshold = new Date(checkInTime);
+    workStartThreshold.setHours(hours, minutes, 0, 0);
+
+    const punctualityStatus: PunctualityStatus =
+      checkInTime > workStartThreshold
+        ? PunctualityStatus.LATE
+        : PunctualityStatus.ON_TIME;
+
     await prisma.attendanceLog.create({
       data: {
         employeeId: employee.id,
-        checkInTime: new Date(),
+        checkInTime: checkInTime,
         status: "checked_in",
-        checkOutMethod: "gps",
-        checkInLocation: `${coords.lat}, ${coords.lng}`,
+        checkInMethod: workMode,
+        checkInLocation:
+          workMode === "IN_OFFICE" && coords
+            ? `${coords.lat}, ${coords.lng}`
+            : null,
+        punctualityStatus: punctualityStatus,
       },
     });
 

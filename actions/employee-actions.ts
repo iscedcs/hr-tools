@@ -109,7 +109,7 @@ export async function updateEmployee(employeeId: string, formData: FormData) {
         where: { id: employeeId },
         data: {
           role,
-          departmentId: departmentId || null,
+          departmentId: departmentId && departmentId !== "none" ? departmentId : null,
           position: position || null,
           phoneNumber: phoneNumber || null,
           nfcCardId: nfcCardId || null,
