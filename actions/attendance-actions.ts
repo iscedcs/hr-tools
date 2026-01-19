@@ -59,7 +59,7 @@ export async function checkInAction(
       return { error: "You are already checked in for today" };
     }
 
-    // Get work start time to calculate punctuality
+   
     // Work resumption is 9am, and from 10:30am (1.5 hours after) it should be counted as late
     const workStartSetting = await prisma.systemSetting.findUnique({
       where: { settingKey: "work_hours_start" },

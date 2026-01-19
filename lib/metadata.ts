@@ -124,7 +124,7 @@ export function generateMetadata(pathname: string): Metadata {
     openGraph: {
       type: "website",
       locale: "en_US",
-      url: process.env.NEXT_PUBLIC_APP_URL || "https://isce-hr.com",
+      url: process.env.NEXT_PUBLIC_APP_URL || "https://hr-tools-beryl.vercel.app",
       siteName,
       title: fullTitle,
       description: metadata.description,
@@ -135,7 +135,7 @@ export function generateMetadata(pathname: string): Metadata {
       description: metadata.description,
     },
     metadataBase: new URL(
-      process.env.NEXT_PUBLIC_APP_URL || "https://isce-hr.com"
+      process.env.NEXT_PUBLIC_APP_URL || "https://hr-tools-beryl.vercel.app"
     ),
   };
 }
