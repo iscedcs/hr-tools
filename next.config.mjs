@@ -47,23 +47,23 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value:
-              "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
+              "camera=(), microphone=(), geolocation=(self), interest-cohort=(self)",
           },
           {
             key: "Content-Security-Policy",
             value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: blob:",
-              "font-src 'self' data:",
-              "connect-src 'self' https://vercel.live https://*.vercel-insights.com",
-              "frame-ancestors 'self'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-src 'self'",
+              "default-src 'self';" +
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live " + 
+              "style-src 'self' 'unsafe-inline'; " +
+              "img-src 'self' data: https: blob:" +
+              "font-src 'self' https:;" +
+              "connect-src 'self'" + ";" +
+              "frame-ancestors 'self'" + ";" +
+              "base-uri 'self'" + ";" +
+              "form-action 'self'" + ";" +
+              "frame-src 'self'" + ";" +
               "object-src 'none'",
-              "upgrade-insecure-requests",
+              "upgrade-insecure-requests" 
             ].join("; "),
           },
         ],
