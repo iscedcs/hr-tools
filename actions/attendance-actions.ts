@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDistanceInMeters } from "@/lib/distance";
 import { OFFICE_LOCATION } from "@/lib/geofence";
 import { PunctualityStatus } from "@prisma/client";
+import { getTodayRange } from "@/lib/utils/getTodayRange";
 
 export async function checkInAction(
   workMode: "IN_OFFICE" | "REMOTE",
@@ -44,13 +45,12 @@ export async function checkInAction(
       }
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { start, end } = getTodayRange("Africa/Lagos");
 
     const existingCheckIn = await prisma.attendanceLog.findFirst({
       where: {
         employeeId: employee.id,
-        checkInTime: { gte: today },
+        checkInTime: { gte: start, lt: end },
         status: "checked_in",
       },
     });
@@ -111,14 +111,13 @@ export async function checkOutAction(location?: string, notes?: string) {
       return { error: "Employee record not found" };
     }
 
-    // Find today's check-in record
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+   
+const { start, end } = getTodayRange("Africa/Lagos");
 
     const checkInRecord = await prisma.attendanceLog.findFirst({
       where: {
         employeeId: employee.id,
-        checkInTime: { gte: today },
+        checkInTime: { gte: start, lt: end },
         status: "checked_in",
       },
       orderBy: { checkInTime: "desc" },
@@ -162,14 +161,14 @@ export async function getTodayAttendance(userId: string) {
     if (!employee) {
       return { error: "Employee record not found" };
     }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    
+const { start, end } = getTodayRange("Africa/Lagos");
 
     const attendance = await prisma.attendanceLog.findFirst({
       where: {
         employeeId: employee.id,
-        checkInTime: { gte: today },
+        checkInTime: { gte: start, lt: end },
+        status: "checked_in",
       },
       orderBy: { checkInTime: "desc" },
     });
