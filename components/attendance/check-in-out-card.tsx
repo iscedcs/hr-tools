@@ -62,64 +62,64 @@ export function CheckInOutCard({ userId }: CheckInOutCardProps) {
     setShowWorkModeDialog(true);
   };
 
-  const handleInOfficeClick = () => {
-  if (!navigator.geolocation) {
-    toast.error("Geolocation not supported");
-    return;
-  }
+  const handleCheckIn = async (workMode: "IN_OFFICE" | "REMOTE") => {
+    setShowWorkModeDialog(false);
+    setIsLoading(true);
+    try {
+      if (workMode === "IN_OFFICE") {
+        if (!navigator.geolocation) {
+          toast.error("Geolocation not supported on this device");
+          setIsLoading(false);
+          return;
+        }
 
-  setIsLoading(true);
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
 
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      setShowWorkModeDialog(false);
+            const result = await checkInAction(workMode, {
+              lat: latitude,
+              lng: longitude,
+            });
 
-      const result = await checkInAction("IN_OFFICE", {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
+            if (result.error) {
+              toast.error(result.error);
+            } else {
+              toast.success(result.message);
+              await loadTodayAttendance();
+            }
 
-      if (result.error) toast.error(result.error);
-      else {
-        toast.success(result.message);
-        await loadTodayAttendance();
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error(error);
+            toast.error("Location permission denied");
+            setIsLoading(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      } else {
+        // REMOTE mode - no location needed
+        const result = await checkInAction(workMode);
+
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success(result.message || "Checked in successfully");
+          await loadTodayAttendance();
+        }
+
+        setIsLoading(false);
       }
-
+    } catch {
+      toast.error("Failed to check in");
       setIsLoading(false);
-    },
-   (error) => {
-  if (error.code === error.PERMISSION_DENIED) {
-    toast.error("Location access blocked. Please enable it in browser settings.");
-  } else {
-    toast.error("Unable to get your location");
-  }
-  setIsLoading(false);
-},
-
-    { enableHighAccuracy: true }
-  );
-};
-
-  const handleCheckIn = async (workMode: "REMOTE") => {
-  setShowWorkModeDialog(false);
-  setIsLoading(true);
-
-  try {
-    const result = await checkInAction(workMode);
-
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success(result.message);
-      await loadTodayAttendance();
     }
-  } catch {
-    toast.error("Failed to check in");
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const handleCheckOut = async () => {
     setIsLoading(true);
@@ -246,14 +246,14 @@ export function CheckInOutCard({ userId }: CheckInOutCardProps) {
           <DialogHeader>
             <DialogTitle>Select Work Mode</DialogTitle>
             <DialogDescription>
-              Choose how you&apos;re working today before checking in
+              Choose how you're working today before checking in
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Button
               variant="outline"
               className="h-auto flex-col items-start justify-start p-4 space-y-2"
-              onClick={handleInOfficeClick}
+              onClick={() => handleCheckIn("IN_OFFICE")}
               disabled={isLoading}>
               <div className="flex items-center gap-3 w-full">
                 <Building2 className="h-5 w-5" />
