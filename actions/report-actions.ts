@@ -9,10 +9,17 @@ export async function generateAttendanceReport(
   try {
     await requireRole(["superadmin", "hr_admin"]);
 
+    // Lateness cut-off time (used for late day counting in reports)
+    const cutoffSetting = await prisma.systemSetting.findUnique({
+      where: { settingKey: "attendance_cutoff_time" },
+    });
     const workStartSetting = await prisma.systemSetting.findUnique({
       where: { settingKey: "work_hours_start" },
     });
-    const workStartTime = workStartSetting?.settingValue || "09:00";
+    const cutoffTime =
+      cutoffSetting?.settingValue ||
+      workStartSetting?.settingValue ||
+      "09:30";
 
     const employees = await prisma.employee.findMany({
       where: { isActive: true },
@@ -47,7 +54,7 @@ export async function generateAttendanceReport(
 
       const lateDays = logs.filter((log) => {
         const checkIn = log.checkInTime;
-        const [hours, minutes] = workStartTime.split(":").map(Number);
+        const [hours, minutes] = cutoffTime.split(":").map(Number);
         const threshold = new Date(checkIn);
         threshold.setHours(hours, minutes, 0, 0);
         return checkIn > threshold;

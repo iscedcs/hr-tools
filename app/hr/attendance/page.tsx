@@ -1,26 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { prisma } from "@/lib/db";
+import { getAttendanceLogsWithTasks } from "@/actions/task-actions";
 import { formatInTimeZone } from "date-fns-tz";
 
 export const dynamic = "force-dynamic";
 
 export default async function AttendanceLogsPage() {
-  const logs = await prisma.attendanceLog.findMany({
-    include: {
-      employee: {
-        include: {
-          user: { select: { name: true } },
-          department: { select: { name: true } },
-          employeeCode: true,
-        },
-      },
-    },
-    orderBy: { checkInTime: "desc" },
-    take: 100,
-  });
+  const { logs, tasksByLogId, integrationStatus } =
+    await getAttendanceLogsWithTasks(100);
 
   const timeZone = "Africa/lagos";
+
+  const integrationMessage = integrationStatus.enabled
+    ? null
+    : integrationStatus.reason || "MonoTrak not connected";
 
   return (
     <div className="space-y-6">
@@ -70,13 +63,18 @@ export default async function AttendanceLogsPage() {
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                     Status
                   </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Tasks
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b border-border hover:bg-muted/50">
+                {logs.map((log) => {
+                  const tasks = tasksByLogId[log.id] || [];
+                  return (
+                    <tr
+                      key={log.id}
+                      className="border-b border-border hover:bg-muted/50">
                     <td className="py-3 px-4 text-sm">
                       {formatInTimeZone(
                         new Date(log.checkInTime),
@@ -145,8 +143,42 @@ export default async function AttendanceLogsPage() {
                         {log.status.replace("_", " ")}
                       </Badge>
                     </td>
+                    <td className="py-3 px-4 text-sm">
+                      {!integrationStatus.enabled ? (
+                        <span className="text-xs text-muted-foreground">
+                          {integrationMessage}
+                        </span>
+                      ) : tasks.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                          None
+                        </span>
+                      ) : (
+                        <div className="space-y-1">
+                          {tasks.slice(0, 3).map((task, index) => (
+                            <div
+                              key={task.id || `${log.id}-task-${index}`}
+                              className="flex flex-wrap items-center gap-2">
+                              <span className="max-w-[200px] truncate">
+                                {task.title}
+                              </span>
+                              {task.status ? (
+                                <Badge variant="secondary">
+                                  {task.status}
+                                </Badge>
+                              ) : null}
+                            </div>
+                          ))}
+                          {tasks.length > 3 ? (
+                            <span className="text-xs text-muted-foreground">
+                              +{tasks.length - 3} more
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
