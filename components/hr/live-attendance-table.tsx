@@ -1,31 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { prisma } from "@/lib/db";
+import { getTodayAttendanceWithTasks } from "@/actions/task-actions";
 import { formatInTimeZone } from "date-fns-tz";
 
 export async function LiveAttendanceTable() {
   const timeZone = "Africa/Lagos";
 
-  // Use UTC day range for consistent querying
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { attendance, tasksByEmployeeId, integrationStatus } =
+    await getTodayAttendanceWithTasks();
 
-  const attendance = await prisma.attendanceLog.findMany({
-    where: {
-      checkInTime: { gte: today },
-    },
-    include: {
-      employee: {
-        include: {
-          user: { select: { name: true } },
-          department: { select: { name: true } },
-          employeeCode: true,
-        },
-      },
-    },
-    orderBy: { checkInTime: "desc" },
-    take: 20,
-  });
+  const integrationMessage = integrationStatus.enabled
+    ? null
+    : integrationStatus.reason || "MonoTrak not connected";
 
   return (
     <Card>
@@ -64,11 +50,16 @@ export async function LiveAttendanceTable() {
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                   Status
                 </th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                  Tasks
+                </th>
               </tr>
             </thead>
             <tbody>
-              {attendance.map((record) => (
-                <tr key={record.id} className="border-b border-border">
+              {attendance.map((record) => {
+                const tasks = tasksByEmployeeId[record.employeeId] || [];
+                return (
+                  <tr key={record.id} className="border-b border-border">
                   <td className="py-3 px-4 text-sm">
                     {record.employee.user.name}
                   </td>
@@ -129,8 +120,39 @@ export async function LiveAttendanceTable() {
                       {record.status.replace("_", " ")}
                     </Badge>
                   </td>
-                </tr>
-              ))}
+
+                  <td className="py-3 px-4 text-sm">
+                    {!integrationStatus.enabled ? (
+                      <span className="text-xs text-muted-foreground">
+                        {integrationMessage}
+                      </span>
+                    ) : tasks.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">None</span>
+                    ) : (
+                      <div className="space-y-1">
+                        {tasks.slice(0, 3).map((task, index) => (
+                          <div
+                            key={task.id || `${record.id}-task-${index}`}
+                            className="flex flex-wrap items-center gap-2">
+                            <span className="max-w-[200px] truncate">
+                              {task.title}
+                            </span>
+                            {task.status ? (
+                              <Badge variant="secondary">{task.status}</Badge>
+                            ) : null}
+                          </div>
+                        ))}
+                        {tasks.length > 3 ? (
+                          <span className="text-xs text-muted-foreground">
+                            +{tasks.length - 3} more
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+                  </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

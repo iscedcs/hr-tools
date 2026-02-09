@@ -60,17 +60,24 @@ export async function checkInAction(
     }
 
    
-    // Work resumption is 9am, and from 10:30am (1.5 hours after) it should be counted as late
+    // Lateness cut-off time (configured by Super Admin via system settings)
+    // Primary key: "attendance_cutoff_time" (e.g. "09:30")
+    // Fallback: "work_hours_start" (existing key), then default "09:30"
+    const cutoffSetting = await prisma.systemSetting.findUnique({
+      where: { settingKey: "attendance_cutoff_time" },
+    });
     const workStartSetting = await prisma.systemSetting.findUnique({
       where: { settingKey: "work_hours_start" },
     });
-    const workStartTime = workStartSetting?.settingValue || "09:00";
-    const [hours, minutes] = workStartTime.split(":").map(Number);
+    const cutoffTime =
+      cutoffSetting?.settingValue ||
+      workStartSetting?.settingValue ||
+      "09:30";
+    const [hours, minutes] = cutoffTime.split(":").map(Number);
 
     const checkInTime = new Date();
     const lateThreshold = new Date(checkInTime);
     lateThreshold.setHours(hours, minutes, 0, 0);
-    lateThreshold.setMinutes(lateThreshold.getMinutes() + 90); // Add 1.5 hours (90 minutes)
 
     const punctualityStatus: PunctualityStatus =
       checkInTime >= lateThreshold

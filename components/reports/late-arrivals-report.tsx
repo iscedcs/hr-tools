@@ -5,11 +5,17 @@ import { prisma } from "@/lib/db";
 import { format } from "date-fns";
 
 export async function LateArrivalsReport() {
-  // Get work start time from settings (default 09:00)
+  // Lateness cut-off time from settings (primary: attendance_cutoff_time, fallback: work_hours_start, default 09:30)
+  const cutoffSetting = await prisma.systemSetting.findUnique({
+    where: { settingKey: "attendance_cutoff_time" },
+  });
   const workStartSetting = await prisma.systemSetting.findUnique({
     where: { settingKey: "work_hours_start" },
   });
-  const workStartTime = workStartSetting?.settingValue || "09:00";
+  const workStartTime =
+    cutoffSetting?.settingValue ||
+    workStartSetting?.settingValue ||
+    "09:30";
 
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
