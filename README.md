@@ -6,7 +6,7 @@ This system empowers HR teams to monitor employee presence with real-time check-
 
 ---
 
-## 🔑 Key Features
+## 🔑 Key Features 
 
 - ✅ **Contactless Check-In/Out:**  
   NFC-enabled check-in using office-issued cards or shared devices. Logs timestamps and ensures physical presence.
