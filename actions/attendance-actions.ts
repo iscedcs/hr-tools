@@ -7,6 +7,7 @@ import { getDistanceInMeters } from "@/lib/distance";
 import { OFFICE_LOCATION } from "@/lib/geofence";
 import { PunctualityStatus } from "@prisma/client";
 import { getTodayRange } from "@/lib/utils/getTodayRange";
+import { toZonedTime } from "date-fns-tz";
 
 export async function checkInAction(
   workMode: "IN_OFFICE" | "REMOTE",
@@ -76,11 +77,15 @@ export async function checkInAction(
     const [hours, minutes] = cutoffTime.split(":").map(Number);
 
     const checkInTime = new Date();
-    const lateThreshold = new Date(checkInTime);
-    lateThreshold.setHours(hours, minutes, 0, 0);
+
+    // Convert to Africa/Lagos timezone for fair lateness comparison
+    const timeZone = "Africa/Lagos";
+    const checkInLocal = toZonedTime(checkInTime, timeZone);
+    const lateThresholdLocal = new Date(checkInLocal);
+    lateThresholdLocal.setHours(hours, minutes, 0, 0);
 
     const punctualityStatus: PunctualityStatus =
-      checkInTime >= lateThreshold
+      checkInLocal >= lateThresholdLocal
         ? PunctualityStatus.LATE
         : PunctualityStatus.ON_TIME;
 
